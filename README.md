@@ -313,3 +313,328 @@ int main() {
     return 0;
 }
 ```
+
+
+# c++语言基础，
+c++中能运行c语言，但c语言不能运行c++
+
+C++语言面向对象 + 标准特性
+C语言面向过程，函数+结构体
+C++里面可以运行C语言，可以调用C语言，反之 就不行C语言无法运行C++
+以后我们85%以上 都是 用C++去写功能
+
+在c语言中基本运行需要引入 
+` #include <stdio.h> `
+在c++中需要引入
+` #include <iostream> `
+
+## 打印语句
+
+* cout *
+```
+cout << "HELLO WORLD!" << endl;
+    
+cout << "YYYYYY\n";
+
+cout << "Line1\n"
+        << "Line2\n"
+        << "line3\n";
+```
+
+需要引入
+` using namespace std; `
+namespace 命名空间
+
+<< 是一个操作重载符，cout 更正确的写法是： std::cout 
+因为我们已经引入 命名空间，所以可以省略为： cout
+
+## 常量
+
+在c或者c++中，常量使用 const 声明，但是在c语言中，常量是个伪命题，因为c中可以直接修改指针
+
+```
+const int i = 90;
+int * p = &i; // c++ Cannot initialize a variable of type 'int *' with an rvalue of type 'const int *'
+*p = 10;
+```
+i 已经被定义成常量
+上面这段代码在c语言中可以运行，并能修改i地址处的值为10，达到了修改常量值的目的。
+但是在c++中会报错，ide工具就会直接报错：Cannot initialize a variable of type 'int *' with an rvalue of type 'const int *'
+
+
+## 引用
+
+* & *
+
+c++中 & 标示引用类型。
+
+```
+int i = 0;
+int & a = i;
+cout << "a地址:" << &a << "\ni地址:" << &i << endl;
+int c = 9;
+int d = 9;
+cout << "c地址:" << &c << "\nd地址:" << &d << endl;
+```
+打印结果：
+a地址:0x7ffeefbff4c8
+i地址:0x7ffeefbff4c8
+c地址:0x7ffeefbff4bc
+d地址:0x7ffeefbff4b8
+
+因为 a 是 i 的引用。 a 指向 i， 所以 a 与 i 的地址一致。
+而c 与 d 不同，c、d都是一个新的对于9的引用。
+
+## 类
+c++ 申明类使用关键字 class
+```
+class Person {
+private:
+    int age;
+    char * name;
+
+public:
+    void setAge(int age) {
+        this->age = age;
+    }
+    void setName(char * name) {
+        this->name = name;
+    }
+    
+    int getAge(){
+        return this->age;
+    }
+    char * getName(){
+        return this->name;
+    }
+};
+```
+如此一个基本类就定义完成，成员变量使用private修饰，在外部不可访问，提供public修饰的set、get函数来操作成员变量。
+
+### 构造函数
+
+```
+public:
+    Person(){
+        cout << "空构造函数" << endl;
+    }
+    Person(int age): age(age) { // 2
+        cout << "一个参数的构造函数： age" << endl;
+    }
+    Person(char * name) { // 3
+        this->name = name;
+        cout << "一个参数的构造函数： name" << endl;
+    }
+    Person(int age, char * name){
+        this->name = name;
+        this->age = age;
+        cout << "两个参数的构造函数： name" << endl;
+    }
+```
+如上所示，第2个与第三个其实效果是一样的，都是对成员变量直接赋值。
+还有构造函数的相互调用问题:
+```
+Person(int age, char * name): Person(age){
+        this->name = name;
+        cout << "两个参数的构造函数： name" << endl;
+    }
+```
+调用两个参数的构造函数时，会调用到一个参数的构造函数，
+* 而且打印会先打印一个参数的构造函数的日志，然后再打印两个参数构造函数的日志  *
+
+### 类的引用
+我们在上面申明了一个类，然后我们可以根据类申明引用
+
+```
+cout << "HELLO TESTCLASS" << endl;
+Person person;
+person.setAge(29);
+person.setName("justin");
+cout << "age:" << person.getAge() << ",  name:" << person.getName() << endl;
+
+Person person1(24, "novia");
+cout << "age:" << person1.getAge() << ",  name:" << person1.getName() << endl;
+```
+打印结果如下：
+`
+HELLO TESTCLASS
+空构造函数
+age:29,  name:justin
+一个参数的构造函数： age
+两个参数的构造函数： name
+age:24,  name:novia
+`
+
+在上述代码中，生成的person都是普通的引用，数据内存都是在栈区。
+接下来看一下在C++中如何使用堆区内存
+
+### 堆内存
+与c语言不同，c++中使用 new 生成的对象都存放在堆内存中，而存放在堆内存中的数据，需要自己手动
+c++使用 delete 释放内存。
+
+```
+Person * person = new Person(29, "justin");
+cout << "age:" << person->getAge() << ",  name:" << person->getName() << endl;
+
+delete person;
+person = NULL;
+```
+
+* QA: 为何栈区内存不需要释放内存
+我们都知道函数在出栈时，会释放栈区内存，那为何不需要使用delete释放。
+其实函数并不是没有调用delete来释放，在函数出栈时，有静默的调用了delete，来释放栈区的内存
+
+* QA：为何调用了delete后，还能调用指针并获取到值
+因为delete的原理并不是直接清空数据，而是标记该块内存地址为可用，当应用有向堆内存重新申请内存时，就可能申请到这块内存，此时数据才会被修改，
+如果此块内存一直没有被申请到时，调用该指针后，还是能访问到之前的数据的。
+当调用 delete 时，该指针即成为悬空指针，继续调用就有可能出现异常，规范用法时指向NULL；
+
+
+### 析构函数
+当对象内存被回收时，会执行对象的析构函数，类似与java对象的finalize函数
+但与finalize函数不同的是，java对象可以在finalize中实现自我拯救，
+c++析构函数中，不能实现自我拯救，主要是用于一些数据清除、销毁工作，如解绑、释放堆内存空间，是的，对象中如果也有开辟堆内存时，就需要在此处释放，不然该内存会被一直占用。
+析构函数的格式：
+
+```
+~Person(){
+    cout << "析构函数" << endl;
+}
+```
+
+### 拷贝构造函数
+```
+// 拷贝构造函数
+Person(const Person & person){
+    this->name = person.name;
+    this->age = person.age;
+    cout << "拷贝构造函数" << endl;
+}
+```
+当执行复制拷贝时，就会执行复制拷贝函数，系统默认的复制拷贝函数会自动完成复制值，
+手动重写复制拷贝函数时，我们也需要手动赋值
+
+此时传入的person就是旧对象，this即是拷贝后生成的新对象
+
+#### 拷贝的场景
+
+* person1 = person2
+
+```
+Person person1(24, "novia");
+Person person2 = person1;
+```
+当执行 Person person2 = person1; 即会执行 拷贝构造函数 来对person2赋值，
+
+* 参数传递
+
+```
+void test(Person person) {
+    cout << "test函数中,参数person的地址: " << &person << endl;
+}
+
+int main() {  
+    Person person1(24, "novia");
+    Person person2 = person1;
+    cout << "Person1.age:" << person1.getAge() << ",  Person1.name:" << person1.getName() << endl;
+    cout << "Person2.age:" << person2.getAge() << ",  Person2.name:" << person2.getName() << endl;
+    cout << "person1地址---" << &person1 << "  ,person2地址---" << &person2 << endl;
+    test(person2);
+    return 0;
+}
+```
+打印结果：
+
+一个参数的构造函数： age
+两个参数的构造函数： name
+拷贝构造函数
+Person1.age:24,  Person1.name:novia
+Person2.age:24,  Person2.name:novia
+person1地址---0x7ffeefbff4b8  ,person2地址---0x7ffeefbff4a8
+拷贝构造函数
+test函数中,参数person的地址: 0x7ffeefbff488
+析构函数
+析构函数
+析构函数
+
+可以看到test函数中打印的person地址 与我们调用 test 函数传递的 person2 地址并不相同。这被叫做 * 行参 *
+
+像避免上面的操作，避免产生大量的副本对象，占用内存，有几个办法，
+
+* 1、使用引用
+在上面就讲过引用，引用也是直接执行地址的，所以当我们使用引用时，就不会重新拷贝赋值了。
+修改一下test函数的入参
+```
+void test(Person & person) {
+    cout << "test函数中,参数person的地址: " << &person << endl;
+}
+```
+
+* 2、运算符重载
+重写 = 运算符，使之返回之前的地址。
+
+
+* 注意事项 *
+```
+Person person2 = person1; // 1
+Person person2;
+person2 = person1; // 2
+```
+方式2是不会调用 拷贝构造函数， 方式1 才会。
+为什么？
+
+因为person2其实已经调用了无参构造函数，
+Person person2; 这一句已经调用了无参构造函数，
+person2 = person1; 只是重新赋值而已。
+
+
+### 常量指针 常量引用 指针常量 常量指针常量
+
+之前讲过常量，代表不可更改值
+
+常量下还有 常量指针 常量引用 指针常量 常量指针常量
+
+注意常量修饰的位置 
+#### 常量指针
+
+```
+ int number = 10;
+int number2 = 100;
+const int * a_p  = &number;
+*a_p = 100; // 修改值 会报错，
+a_p = &number2; // 修改地址 不会报错
+```
+const 用来修饰类型，这个指针即为常量指针
+声明了常量指针 a_p，
+*a_p = 100; 会提示错误：Read-only variable is not assignable
+常量代表只读,  常量指针 常量是修饰值的，不可以直接修改指针指向的数据，只能通过修改指针指向的地址来修改值
+
+#### 常量引用
+```
+const int & a = 18;
+```
+const 用来修饰引用，这个引用即为 常量引用
+常量引用指向的数据也是不能直接修改的。
+拷贝构造函数 重的参数就是一个常量引用。
+
+#### 指针常量
+```
+int * const b_p = &number;
+//    b_p = &number2; // 会报错 Cannot assign to variable 'b_p' with const-qualified type 'int *const'
+*b_p = 190; // 不报错
+cout << "*bp指向的值为" << *b_p << endl;
+```
+const 用来修饰指针，这个指针即是 指针常量
+上面的输出结果：
+*bp指向的值为190
+
+指针常量，不可修改指向的地址，但可以修改指针指向的值
+
+#### 常量指针常量
+常量指针常量 其实相当于 常量指针 与 指针常量 两个的合并。
+```
+const int * const c_p = &number;
+c_p = &number2; // 报错
+*c_p = 99; // 报错
+```
+常量指针常量 既不能修改指向的地址，也不能修改指针指向的数据，即完全只读
